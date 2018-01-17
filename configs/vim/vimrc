@@ -1,0 +1,313 @@
+set nocompatible
+filetype off
+
+" set the runtime path to include Vundle and initialize
+set rtp+=~/.vim/bundle/Vundle.vim
+call vundle#begin()
+
+"=========== Vundle plugin (must be first)
+Plugin 'gmarik/Vundle.vim'
+
+"=========== GIT plugins
+Plugin 'airblade/vim-gitgutter'			" Displays git diff information in line gutters
+
+"=========== Indexing/Tagging plugins
+Plugin 'majutsushi/tagbar'
+Plugin 'ludovicchabant/vim-gutentags'
+
+"=========== Autocomplete plugins
+Plugin 'jiangmiao/auto-pairs'
+
+"=========== Navigation plugins
+Plugin 'christoomey/vim-tmux-navigator'
+Plugin 'kien/ctrlp.vim'
+
+"=========== General/Miscellaneous plugins
+Plugin 'lastsupertim/vim-dispatch'
+Plugin 'scrooloose/nerdcommenter'
+
+"=========== Display plugins
+Plugin 'vim-airline/vim-airline'
+Plugin 'vim-airline/vim-airline-themes'
+
+call vundle#end()            " required
+"filetype plugin indent on    " required
+
+"=========================== Theme settings
+set background=dark
+colorscheme apprentice
+
+"=========================== Vim behavior settings
+if has ('autocmd')
+	"=== Autoreload .vimrc on save, add file-type-based indentation
+	augroup vimrc			" Replace vim configuration upon save
+		autocmd! BufWritePost $MYVIMRC source % | echom "Reloaded " . $MYVIMRC | redraw
+		autocmd! BufWritePost $MYGVIMRC if has('gui_running') | so % | echom "Reloaded " . $MYGVIMRC | endif | redraw
+	augroup END
+
+	augroup RestoreCursor	" Restore cursor position when opening files
+		autocmd!
+		autocmd BufReadPost * call setpos(".", getpos("'\""))|normal zz
+	augroup END
+
+	augroup DetectFiletype	" Assign syntax coloring for custom file extensions
+		autocmd BufRead,BufNewFile *.vimproj set filetype=vim
+	augroup END
+
+	function! LoadTemplate()
+		silent! %substitute#\[vim \(.\{-\}\)\ vim\]#\=eval(submatch(1))#ge|%substitute#\[HERE\]##g
+	endfunction
+	augroup templates
+		autocmd BufNewFile *.sh 0r ~/.vim/templates/skeleton.sh | call LoadTemplate()
+		autocmd BufNewFile *.c 0r ~/.vim/templates/skeleton.c | call LoadTemplate()
+		autocmd BufNewFile *.cpp 0r ~/.vim/templates/skeleton.cpp | call LoadTemplate()
+		autocmd BufNewFile *.h,*.hpp 0r ~/.vim/templates/skeleton.h | call LoadTemplate()
+		autocmd BufNewFile *.py 0r ~/.vim/templates/skeleton.py | call LoadTemplate()
+		autocmd BufNewFile *.vimproj 0r ~/.vim/templates/skeleton.vimproj | call LoadTemplate()
+	augroup END
+
+	" Enable file type detection.
+	" Use the default filetype settings, so that mail gets 'tw' set to 72, 'cindent' is on in C files, etc.
+	" Also load indent files, to automatically do language-dependent indenting.
+	filetype plugin indent on
+
+	" Fix python indentation defaults, no respect
+	autocmd Filetype python setlocal noexpandtab tabstop=4 shiftwidth=4 softtabstop=4
+	autocmd WinEnter * set cursorline		" Highlight cursor line
+	autocmd WinLeave * set nocursorline		" Highlight cursor line
+
+endif
+
+
+"=========================== Positional settings
+set splitbelow		" Use bottom split for a new horizontal split buffer
+set splitright		" Use right split for a new vertical split buffer
+
+"=========================== General settings
+set exrc			" Load working directory .vimrc file
+set secure
+set antialias		" Enable antialiasing on Mac OS X
+set encoding=utf-8	" Default utf-8 encoding
+set history=1024	" Increase command history
+set clipboard=unnamed	" Allow us to use system clipboard"
+
+set shortmess+=O	" file-read message overwrites previous
+set shortmess+=o	" overwrite file-written messages
+
+if exists('&belloff')
+  set belloff=all	" never ring the bell for any reason
+endif
+
+if exists('$SUDO_USER')
+	set nobackup                        " don't create root-owned files
+	set nowritebackup                   " don't create root-owned files
+	set backupdir=/tmp	" Location of the backup directory set dir=/tmp		" Location of the swap file
+else
+	set backupdir=~/local/.vim/tmp/backup
+	set backupdir+=~/.vim/tmp/backup    " keep backup files out of the way
+	set backupdir+=.
+	set directory=~/local/.vim/tmp/swap//
+	set directory+=~/.vim/tmp/swap/    " keep swap files out of the way
+	set directory+=.
+endif
+
+" Disabling arrow keys (forming habbits!)
+noremap <Up> <NOP>
+noremap <Down> <NOP>
+noremap <Left> <NOP>
+noremap <Right> <NOP>
+let mapleader = " "
+nmap \ <Leader>
+
+" Wildcard search ignore settings
+set wildignore+=.git
+set wildignore+=*~,*.swp,*.swo,*.tmp
+
+"=========================== Editor formatting
+set tabstop=4		" width of the TAB character
+set softtabstop=4
+set shiftwidth=4	" depth of single indentation level
+set noexpandtab
+set cindent			" enable advanced indentation tailored towards c-style languages
+set cino+=g0		" indent public/private keywords after typing colon ':'
+
+"=========================== Editor display
+syntax on			" Enable syntax highlighting across the board
+set relativenumber
+set number
+set hlsearch		" Highlight search results
+set cursorline		" Highlight cursor line
+set laststatus=2	" Show statusbar all the time
+set scrolloff=1		" Scroll offset of 1 line
+set showmatch		" Show matching bracket
+set wildmenu		" Show advanced autocompletion in command mode
+set nojoinspaces	" don't autoinsert two spaces after '.', '?', '!' for join command
+
+
+"=========================== Fixes
+"=== Fix the backspace key from getting stuck on one line
+set backspace=indent,eol,start
+
+"=== Allow color schemes to do bright colors without forcing bold.
+if &t_Co == 8 && $TERM !~# '^linux\|^Eterm'
+  set t_Co=16
+endif
+
+"=== Fix key bindings if running within tmux on mac
+if &term =~ '^screen'
+" tmux will send xterm-style keys when its xterm-keys option is on
+	execute "set <xUp>=\e[1;*A"
+	execute "set <xDown>=\e[1;*B"
+	execute "set <xRight>=\e[1;*C"
+	execute "set <xLeft>=\e[1;*D"
+endif
+
+if has('path_extra')
+  setglobal tags-=./tags tags-=./tags; tags^=./tags;
+endif
+
+"=========================== Airline plugin customization
+let g:airline_theme = "bubblegum"
+
+"=== Enable the tabline extension which shows all buffers
+let g:airline#extensions#tabline#enabled = 1
+let g:airline#extensions#tabline#left_sep = ' '
+let g:airline#extensions#tabline#left_alt_sep = '|'
+let g:airline#extensions#tabline#buffer_nr_show = 1
+let g:airline#extensions#tabline#buffer_nr_format = '| %s '
+let g:airline#extensions#tabline#fnamemod = ':t'
+let g:airline#extensions#tabline#show_splits = 0
+let g:airline_symbols_ascii = 1
+
+let g:airline_section_a = ''		" mode/crypt/paste/spell
+let g:airline_section_b = ''		" branch
+"let g:airline_section_c = '%t'		" bufferline or filename
+let g:airline_section_x = ''		" tagbar/filetype/virtualenv
+let g:airline_section_y = ''		" encoding/fileformat
+let g:airline_section_z = '%l : %v' " line : column indicator
+let g:airline_section_error   = ''	" errors notification
+let g:airline_section_warning = ''	" warnings notification
+
+" Ensure the vertical bars match the airline colors in the horizontal highlights
+hi VertSplit ctermbg=238 ctermfg=238
+
+"=== Custom fonts for airline status bar
+let g:airline_powerline_fonts = 0
+
+"=========================== Other customizations
+let g:tagbar_autofocus = 1
+let g:tagbar_compact = 1
+
+"=== Custom build parameters
+let g:dev_build_dir = 'build'
+let g:dev_program = '<g:dev_program>'
+
+
+"=========================== Quickfix Toggle
+function! GetBufferList()
+	redir =>buflist | silent! ls!| redir END| return buflist
+endfunction
+
+function! ToggleList(bufname, pfx)
+	let buflist = GetBufferList()
+	for bufnum in map(filter(split(buflist, '\n'), 'v:val =~ "'.a:bufname.'"'), 'str2nr(matchstr(v:val, "\\d\\+"))')
+		if bufwinnr(bufnum) != -1
+			exec(a:pfx.'close')
+			return
+		endif
+	endfor
+	if a:pfx == 'l' && len(getloclist(0)) == 0
+		echohl ErrorMsg
+		echo "Location List is Empty."
+		return
+	endif
+	let winnr = winnr()
+	exec(a:pfx.'open')
+	if winnr() != winnr
+		wincmd p
+	endif
+endfunction
+
+"=========================== Tagbar Toggle
+function! ToggleTagbar()
+	echo "Tagbar Toggling now..."
+	if !exists('t:tagbar_buf_name')
+		echo "Tagbar toggling for the first time in tab"
+		execute 'TagbarOpenAutoClose'
+		return
+	endif
+
+    let tagbarwinnr = bufwinnr(t:tagbar_buf_name)
+    if tagbarwinnr != -1
+		echo "Window exists "
+        if winnr() != tagbarwinnr
+			echo "closing tagbar"
+			execute 'TagbarToggle'
+		else
+			echo "opening tagbar"
+			execute 'TagbarToggle'
+        endif
+	else
+		echo "opening autoclose"
+		execute 'TagbarOpenAutoClose'
+    endif
+endfunction
+
+" Ensure quickfix remains open if there are linker errors in clang
+setglobal errorformat^=%+Eclang:\ error:%.%#
+
+"=========================== Tagging configuration
+set tags=./tags,tags;		" Seach in current dir, current file's dir, or up dir until $HOME
+
+"=========================== Scroll Controls
+"noremap <silent> <c-u> 12<C-y>12k
+"noremap <silent> <c-d> 12<C-e>12j
+
+"=========================== Keyboard Bindings - Normal Mode
+"=== Split navigations
+nnoremap <C-J> <C-W><C-J>
+nnoremap <C-K> <C-W><C-K>
+nnoremap <C-L> <C-W><C-L>
+nnoremap <C-H> <C-W><C-H>
+
+"=== Split resizing
+nnoremap <Down> <C-w>-
+nnoremap <Up> <C-w>+
+nnoremap <Left> <C-w><
+nnoremap <Right> <C-w>>
+
+"=== Navigation bindings
+nnoremap <silent> <Leader>q :bd\|bd #<CR>	" Destroy buffer
+nnoremap <silent> <Leader><S-Tab> : bp<CR>			" Previous buffer
+nnoremap <silent> <Leader><Tab> : bn<CR>				" Next buffer
+nnoremap <silent> <Leader>d :bp\|bd #<CR>			" Destroy buffer
+
+"=== Quickfix navigation
+nnoremap <silent> <Leader>e :cn <CR>		" Open file/line for next error in quickfix window
+nnoremap <silent> <Leader><S-e> :cp <CR>	" Open file/line for previous error in quickfix window
+
+"=== Display toggles
+"nnoremap <silent> <leader>l :call ToggleList("Location List", 'l')<CR>
+nnoremap <silent> <leader>f :call ToggleList("Quickfix List", 'c')<CR>	" Toggle quickfix view
+nnoremap <silent> <Leader>t :call ToggleTagbar() <CR>					" Open tagbar, close after navigating tag
+nnoremap <silent> <Leader><Leader> :nohlsearch<CR>						" Clear highlighting
+nnoremap <silent> <Esc><Esc> :nohlsearch<CR>							" Clear highlighting
+nnoremap <silent> <C-n>	   :let [&nu, &rnu] = [!&rnu, &nu+&rnu==1]<CR>			" Toggle line numbers
+nnoremap <silent> <Leader>o :e.<CR>										" Open editor window
+
+"=== Editor bindings
+"nnoremap <space> za|					" Enable folding with the spacebar
+nnoremap <silent> <Leader>w :w !diff % -<CR>|	" Show differences before writing to file
+nnoremap <silent> <Leader><S-w> :w<CR>			" Save file
+
+"=== Developer/build bindings
+if filereadable("project.vimproj") | source ./project.vimproj | endif
+nnoremap <silent> <Leader>c :execute 'Dispatch mkdir -p ' . g:dev_build_dir . ' && cd ' . g:dev_build_dir . ' && rm -rf * && cmake ..' <CR>
+nnoremap <silent> <Leader>b :execute 'Dispatch pwd && make -j 4 -C' . g:dev_build_dir <CR>
+nnoremap <silent> <Leader>r :execute 'Dispatch ./' . g:dev_program <CR>
+
+" Add JSON auto formatter
+nnoremap <silent> <Leader>j :%!python -m json.tool<CR>
+
+" Add support for running custom command whenever file changes
+
